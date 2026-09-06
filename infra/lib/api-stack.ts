@@ -89,9 +89,12 @@ export class ApiStack extends Stack {
       publicReadAccess: false,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      // デモ用途: スタック削除時にバケットも破棄しオブジェクトも自動削除する。
+      // スタック削除時はバケットも破棄する（RemovalPolicy.DESTROY）。
+      // ただし autoDeleteObjects はあえて有効化しない。中身（手書き画像）が残った
+      // バケットは DeleteBucket が失敗し、CloudFormation のスタック削除自体が失敗する。
+      // これにより「データが残っているのに気づかず削除される」ことを防ぐ（明示的な安全策）。
+      // 完全に破棄したい場合は先にバケットを空にしてから cdk destroy すること。
       removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
     });
 
     // -----------------------------------------------------------------------
