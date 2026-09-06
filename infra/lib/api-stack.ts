@@ -136,11 +136,15 @@ export class ApiStack extends Stack {
     // -----------------------------------------------------------------------
     // IAM 権限（最小権限）。
     // - Votes_Table への読み書き（Storage の書き込み / results のスキャン読み取り）
-    // - Image_Store への読み書き（画像保存 / ロールバック削除）
+    // - Image_Store への読み書き（画像保存 PutObject / ロールバック削除 DeleteObject /
+    //   pre-signed URL 生成のための GetObject, Req 9.6 / 12.8）。grantReadWrite は
+    //   s3:GetObject を含む最小権限であり、バケットは非公開のまま維持する
+    //   （公開化・パブリックアクセス許可・CloudFront/OAC 公開は行わない）。
     // - Bedrock InvokeModel（マルチモーダル解析）。推論プロファイル ID / foundation model
     //   双方の ARN パターンを許可する。
     // -----------------------------------------------------------------------
     this.votesTable.grantReadWriteData(this.handler);
+    // grantReadWrite は GetObject（pre-signed URL 生成）/ PutObject / DeleteObject を付与する。
     this.imageBucket.grantReadWrite(this.handler);
 
     // Bedrock InvokeModel: 推論プロファイル（inference-profile）とその背後の

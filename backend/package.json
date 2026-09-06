@@ -13,6 +13,7 @@
     "@aws-sdk/client-dynamodb": "^3.637.0",
     "@aws-sdk/client-s3": "^3.637.0",
     "@aws-sdk/lib-dynamodb": "^3.637.0",
+    "@aws-sdk/s3-request-presigner": "^3.1127.0",
     "@tegaki/shared": "*"
   },
   "devDependencies": {

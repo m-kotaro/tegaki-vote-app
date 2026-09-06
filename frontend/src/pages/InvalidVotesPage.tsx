@@ -141,6 +141,7 @@ export function InvalidVotesPage(): React.JSX.Element {
               <thead>
                 <tr>
                   <th style={thStyle}>vote_id</th>
+                  <th style={thStyle}>手書き画像</th>
                   <th style={thStyle}>読み取りテキスト</th>
                   <th style={thStyle}>理由</th>
                   <th style={thStyle}>登録日時</th>
@@ -150,6 +151,13 @@ export function InvalidVotesPage(): React.JSX.Element {
                 {invalidVotes.map((vote) => (
                   <tr key={vote.vote_id}>
                     <td style={tdStyle}>{vote.vote_id}</td>
+                    {/* 当該投票の手書き画像（Req 12.8）。null / 読み込み失敗時はプレースホルダ（Req 12.9）。 */}
+                    <td style={tdStyle}>
+                      <InvalidVoteImage
+                        imageUrl={vote.image_url}
+                        voteId={vote.vote_id}
+                      />
+                    </td>
                     <td style={tdStyle}>
                       {/* recognized_text が null（判読不能）のときはその旨を表示（Req 12.2）。 */}
                       {vote.recognized_text === null ? (
@@ -185,4 +193,58 @@ const tdStyle: React.CSSProperties = {
   borderBottom: "1px solid #eee",
   padding: "0.4rem 0.6rem",
   verticalAlign: "top",
+};
+
+/**
+ * 無効票 1 行分の手書き画像セル（Req 12.8 / 12.9）。
+ * - image_url が非 null なら pre-signed URL を `<img src={image_url}>` で表示する（Req 12.8）。
+ * - image_url が null、または `<img>` の読み込みに失敗（onError）した場合は
+ *   「画像なし」プレースホルダを表示する（Req 12.9）。読み込み失敗は行ごとの useState で管理する。
+ */
+function InvalidVoteImage({
+  imageUrl,
+  voteId,
+}: {
+  imageUrl: string | null;
+  voteId: string;
+}): React.JSX.Element {
+  const [failed, setFailed] = useState(false);
+
+  // URL が無い（presign 失敗など）か、読み込みに失敗したときはプレースホルダ（Req 12.9）。
+  if (imageUrl === null || failed) {
+    return (
+      <div style={imagePlaceholderStyle} aria-label="画像なし">
+        画像なし
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={`手書き画像 (${voteId})`}
+      style={imageStyle}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+const imageStyle: React.CSSProperties = {
+  width: 150,
+  height: "auto",
+  objectFit: "contain",
+  border: "1px solid #ddd",
+  display: "block",
+};
+
+const imagePlaceholderStyle: React.CSSProperties = {
+  width: 150,
+  minHeight: 60,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "1px dashed #ccc",
+  color: "#888",
+  fontSize: "0.85rem",
+  boxSizing: "border-box",
 };

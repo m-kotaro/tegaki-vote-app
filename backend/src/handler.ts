@@ -33,7 +33,7 @@ import type {
 import { validateVoteRequest } from "./modules/receiver.js";
 import { analyze } from "./modules/analyzer.js";
 import { store } from "./modules/storage.js";
-import { toVoteRecordSummaries } from "./modules/results.js";
+import { attachImageUrls, toVoteRecordSummaries } from "./modules/results.js";
 
 // ---------------------------------------------------------------------------
 // CORS / レスポンスヘルパ
@@ -209,9 +209,20 @@ async function handleResults(
 
   // DynamoDB から当該 election_id の投票を読み取り、票レコード一覧を返す（集計なし, Req 9.1 / 9.2）。
   const records = await readVotesByElection(electionId);
+
+  // 2 段構成（design.md「Results 読み取り」）:
+  //   1. 純粋写像 toVoteRecordSummaries で VoteRecordSummary[]（image_url は null）へ写像。
+  //   2. presign 合成レイヤ attachImageUrls で各レコードに image_url（pre-signed URL）を付与（Req 9.6）。
+  //      presign 失敗レコードは image_url=null のまま（Req 9.7）。
+  const summaries = toVoteRecordSummaries(records);
+  const imageKeysByVoteId = new Map(
+    records.map((record) => [record.vote_id, record.image_key]),
+  );
+  const votes = await attachImageUrls(summaries, imageKeysByVoteId);
+
   const response: ElectionResultsResponse = {
     election_id: electionId,
-    votes: toVoteRecordSummaries(records),
+    votes,
   };
   return jsonResponse(200, response);
 }

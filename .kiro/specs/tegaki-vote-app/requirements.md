@@ -28,14 +28,15 @@
 - **Candidate**: 候補者。id と name を持つ。
 - **VoteResult**: 投票 1 件の解析・判定結果。vote_id、recognized_text、matched_candidate（null 可）、is_valid、confidence、reason、created_at を持つ。
 - **Votes_Table**: DynamoDB のテーブル。PK は vote_id（UUID）。投票結果を保存する。
-- **Image_Store**: S3 バケット。手書き画像を保管する。
+- **Image_Store**: S3 バケット。手書き画像を保管する。非公開のまま保持し、Invalid_Votes_View（/invalid）での手書き画像表示は有効期限付きの一時アクセス用 URL（pre-signed URL）経由でのみ行う（公開バケットにはしない）。
+- **image_url**: 当該投票の手書き画像への一時アクセス用 URL（有効期限付きの S3 pre-signed URL）。Backend が GET results 応答の各票レコードに付与する。presign に失敗した場合など利用できないときは null。
 - **recognized_text**: Bedrock_LLM が手書き画像から読み取った日本語テキスト。
 - **matched_candidate**: recognized_text に最も一致した候補者名。一致なしの場合は null。
 - **is_valid**: 投票が有効票か無効票かを表す真偽値。候補者リストと一致した場合 true。
 - **confidence**: Bedrock_LLM が返す判定の信頼度。0.0〜1.0 の範囲の数値。
 - **election_id**: 各 Election を一意に識別する文字列（例: "round-1"、"round-2"、"round-3"）。
 - **Results_View（/results）**: 指定した Election（開票回）の開票結果を表示する運営者向け画面。want 要件。Backend は指定 election_id の票レコード一覧を返し、総投票数・有効票数・無効票数・候補者ごとの得票の集計は Frontend が行う。Invalid_Votes_View（/invalid）と相互に遷移できる。投票ページ（/）からは到達しない。
-- **Invalid_Votes_View（/invalid）**: 無効票の詳細を理由付きで一覧表示する運営者向け画面。Frontend が Backend から受信した票レコード一覧のうち is_valid が false の票を抽出し、各無効票の vote_id・recognized_text（判読不能なら null）・reason・created_at を表示する。Results_View（/results）と相互に遷移でき、投票者フローとは分離した独立エリアであり投票ページ（/）からは到達しない。
+- **Invalid_Votes_View（/invalid）**: 無効票の詳細を理由付きで一覧表示する運営者向け画面。Frontend が Backend から受信した票レコード一覧のうち is_valid が false の票を抽出し、各無効票の vote_id・recognized_text（判読不能なら null）・reason・created_at・当該投票の手書き画像を表示する。手書き画像は Image_Store に保存済みの当該投票の画像を一時アクセス用 URL（pre-signed URL）経由で表示する。Results_View（/results）と相互に遷移でき、投票者フローとは分離した独立エリアであり投票ページ（/）からは到達しない。
 
 ## Requirements
 
@@ -161,6 +162,8 @@
 3. WHEN Backend から票レコード一覧を受信する, THE Frontend SHALL 総投票数、有効票数、無効票数を集計する。ここで総投票数 = 有効票数 + 無効票数 とする
 4. WHEN Frontend が開票結果を集計する, THE Frontend SHALL is_valid が true の票を matched_candidate ごとに集計し、候補者ごとの得票数を得票数の降順で表示する
 5. WHEN Frontend が開票結果を集計する, THE Frontend SHALL is_valid が false の票を候補者ごとの得票集計から除外し、無効票数としてのみ計上する
+6. WHEN GET /elections/{election_id}/results リクエストを受け付ける, THE Backend SHALL 当該 election_id を持つ各票レコードに、当該投票の手書き画像への一時アクセス用 URL（有効期限付きの pre-signed URL）を含めて返す
+7. IF 票レコードに対応する手書き画像への一時アクセス用 URL を生成できない, THEN THE Backend SHALL 当該票レコードの一時アクセス用 URL を null として返す
 
 ### Requirement 10: 開票回設定の管理（フロントエンド専用）
 
@@ -203,6 +206,8 @@
 5. THE Frontend SHALL Invalid_Votes_View（/invalid）に Results_View（/results）へ遷移するリンクを表示する
 6. THE Frontend SHALL 投票ページ（/）から Results_View（/results）および Invalid_Votes_View（/invalid）へ遷移する手段を提供しない
 7. THE Frontend SHALL Invalid_Votes_View（/invalid）で無効票の reason などの判定詳細を運営者向けに表示し、投票ページ（/）の ResultView には reason などの判定詳細を表示しない
+8. THE Frontend SHALL Invalid_Votes_View（/invalid）で、各無効票について当該投票の手書き画像を、票レコードに含まれる一時アクセス用 URL（pre-signed URL）を用いて表示する
+9. IF 無効票の票レコードに手書き画像の一時アクセス用 URL が含まれない、または当該 URL からの画像取得に失敗する, THEN THE Frontend SHALL 当該無効票について画像を表示できない旨を示すプレースホルダを表示する
 
 ## 未決事項（設計フェーズで決定する）
 

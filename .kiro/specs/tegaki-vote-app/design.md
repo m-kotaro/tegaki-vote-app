@@ -156,7 +156,7 @@ React + Vite + Canvas API + Framer Motion で構成する。主なコンポー�
 | `CountingIndicator` | 「開票中...」状態表示 | 3.5, 3.8 |
 | `ResultView` | 投票ページ（`/`）の完了表示。投票が登録された旨の**完了メッセージのみ**を表示し、`is_valid`・`matched_candidate`・`confidence`・`reason`・`recognized_text` などの判定詳細を投票者に表示しない（Req 7.2）。運営者向け画面へのリンクを持たない（Req 12.6） | 7.2, 7.3 |
 | `ResultsView`（want） | `/results` の開票結果ページ。運営者エリア。指定開票回の票レコード一覧を Backend から取得し、フロント側で集計（総数・有効/無効・候補者別得票）して表示。**`/invalid`（無効票詳細）へ遷移するリンクを持つ**（Req 12.4）。投票ページ（`/`）からは到達しない（Req 12.6） | 9.3〜9.5, 12.4 |
-| `InvalidVotesView`（want） | `/invalid` の無効票詳細ページ。運営者エリア。Backend から受信した票レコード一覧のうち `is_valid=false` の票を純粋関数 `selectInvalidVotes` で抽出し、各無効票の `vote_id`・`recognized_text`（null は判読不能である旨を表示, Req 12.2）・`reason`・`created_at` を一覧表示する（Req 12.1）。無効票が 1 件も存在しない場合は「無効票なし」を表示する（Req 12.3）。`reason` などの判定詳細を運営者向けに表示する（Req 12.7）。**`/results`（開票結果）へ遷移するリンクを持つ**（Req 12.5）。投票ページ（`/`）からは到達しない（Req 12.6） | 12.1〜12.5, 12.7 |
+| `InvalidVotesView`（want） | `/invalid` の無効票詳細ページ。運営者エリア。Backend から受信した票レコード一覧のうち `is_valid=false` の票を純粋関数 `selectInvalidVotes` で抽出し、各無効票の `vote_id`・`recognized_text`（null は判読不能である旨を表示, Req 12.2）・`reason`・`created_at`・当該投票の手書き画像を一覧表示する（Req 12.1 / 12.8）。手書き画像は票レコードの `image_url`（pre-signed URL）を `<img src={image_url}>` で表示し、`image_url` が null または画像取得に失敗した場合は「画像なし」等のプレースホルダを表示する（Req 12.8 / 12.9）。無効票が 1 件も存在しない場合は「無効票なし」を表示する（Req 12.3）。`reason` などの判定詳細を運営者向けに表示する（Req 12.7）。**`/results`（開票結果）へ遷移するリンクを持つ**（Req 12.5）。投票ページ（`/`）からは到達しない（Req 12.6） | 12.1〜12.5, 12.7, 12.8, 12.9 |
 | `ErrorNotice` | エラー種別表示（解析失敗 / 保存失敗 / 通信タイムアウト / 未入力 / 受付停止中） | 1.6, 2.5, 3.6, 3.7, 7.5, 8.4, 8.5, 11.5 |
 
 **Canvas 手書きコンポーネントのインターフェース**:
@@ -261,7 +261,7 @@ export function selectInvalidVotes(
 ): VoteRecordSummary[];
 ```
 
-`InvalidVotesView` は取得した票レコード一覧に `selectInvalidVotes` を適用し、各無効票の `vote_id`・`recognized_text`（null のとき「判読不能」等の旨を表示, Req 12.2）・`reason`・`created_at` を一覧表示する。抽出結果が空なら「無効票なし」を表示する（Req 12.3）。あわせて `/results` へ遷移するリンクを表示する（Req 12.5）。本設計では記述のみとし、want 要件として実装は後続とする。
+`InvalidVotesView` は取得した票レコード一覧に `selectInvalidVotes` を適用し、各無効票の `vote_id`・`recognized_text`（null のとき「判読不能」等の旨を表示, Req 12.2）・`reason`・`created_at`・当該投票の手書き画像を一覧表示する。手書き画像は票レコードの `image_url`（Backend が付与した pre-signed URL, Req 9.6）を用いて `<img src={image_url}>` で表示する（Req 12.8）。`image_url` が null（Backend が presign できなかった, Req 9.7）または `<img>` の読み込みに失敗した場合（`onError`）は、「画像なし」等のプレースホルダを表示する（Req 12.9）。抽出結果が空なら「無効票なし」を表示する（Req 12.3）。あわせて `/results` へ遷移するリンクを表示する（Req 12.5）。画像表示は `/invalid` 画面のみで行い、`/results`（開票結果）画面は変更しない。本設計では記述のみとし、want 要件として実装は後続とする。
 
 ### Backend Lambda
 
@@ -401,15 +401,35 @@ import type { VoteRecord, VoteRecordSummary } from "@tegaki/shared";
  *   recognized_text（判読不能時 null, Req 12.2）・reason・created_at を写像する。
  * - VoteRecord にはこれらの属性が既に存在するため（Data Models: Votes_Table スキーマ）、
  *   該当フィールドを抽出するのみ。集計・抽出は行わない。
+ * - image_url は「写像の関心の外」であるため、この純粋関数では常に null を設定する
+ *   （presign は S3 への副作用を伴うため後段の presign 合成レイヤが上書きする, Req 9.6）。
+ *   したがってこの関数は入出力が純粋で決定的に保たれ、Property 19（全属性保存・非集計）と両立する。
  */
 export function toVoteRecordSummaries(
   records: readonly VoteRecord[],
 ): VoteRecordSummary[];
 
 /**
- * 指定 election_id を持つ票レコード一覧を返す（Req 9.1 / 9.2）。
- * - Backend は集計・無効票抽出をしない。toVoteRecordSummaries で写像したレコード一覧を返すのみ。
- * - 各レコードは vote_id・matched_candidate・is_valid・recognized_text・reason・created_at を含む（Req 9.1）。
+ * 各票レコードに手書き画像の pre-signed URL を合成する副作用レイヤ（Req 9.6 / 9.7）。
+ * - 対応する VoteRecord.image_key（S3 オブジェクトキー）から、Image_Store（非公開バケット）に対する
+ *   有効期限付き pre-signed URL（GetObject, 有効期限 3600 秒）を生成し image_url に載せる。
+ * - presign に失敗したレコードは image_url を null のままにする（Req 9.7）。他レコードの処理は継続する。
+ * - この関数のみが S3（presign）への副作用を持ち、純粋写像 toVoteRecordSummaries とは分離する。
+ *   純粋写像 → presign 合成、の 2 段構成により、Property 19（純粋写像の全属性保存・非集計）を保ちつつ
+ *   URL 付与という副作用を明確に切り離す。
+ */
+export function attachImageUrls(
+  summaries: readonly VoteRecordSummary[],
+  imageKeysByVoteId: ReadonlyMap<string, string>, // vote_id -> image_key（VoteRecord 由来）
+  presignTtlSeconds?: number,                     // 既定 3600（Req 9.6）
+): Promise<VoteRecordSummary[]>;
+
+/**
+ * 指定 election_id を持つ票レコード一覧を返す（Req 9.1 / 9.2 / 9.6）。
+ * - Backend は集計・無効票抽出をしない。純粋写像 toVoteRecordSummaries でレコードを写像し、
+ *   presign 合成レイヤ attachImageUrls で各レコードに image_url（pre-signed URL）を付与して返す。
+ * - 各レコードは vote_id・matched_candidate・is_valid・recognized_text・reason・created_at・image_url を含む（Req 9.1 / 9.6）。
+ * - presign できないレコードの image_url は null（Req 9.7）。
  * - 指定 election_id を持つレコードが存在しない場合は空配列を返す（Req 9.2）。
  * - election_id は保存ラベルとして扱い、開票回定義との照合は行わない（Req 9.1）。
  */
@@ -418,7 +438,9 @@ export function readVotesByElection(
 ): Promise<VoteRecordSummary[]>;
 ```
 
-v1 の読み取りは `Votes_Table` のスキャン + `election_id` フィルタで実装し、取得した `VoteRecord[]` を `toVoteRecordSummaries` で `VoteRecordSummary[]`（`vote_id`・`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at`）へ写像して返す。ハンドラの `GET /elections/{election_id}/results` レスポンス（`ElectionResultsResponse.votes`）はこの拡張された `VoteRecordSummary` を返す。将来の効率化のための GSI は後付け可能（Data Models 参照）。集計（`tally(votes): ElectionResults`, Req 9.3〜9.5）と無効票抽出（`selectInvalidVotes(votes): VoteRecordSummary[]`, Req 12.1）はいずれも Backend には持たず、フロント側の純粋関数として `frontend/src/logic/` に実装する（Frontend セクション / Testing Strategy 参照）。
+v1 の読み取りは `Votes_Table` のスキャン + `election_id` フィルタで実装し、取得した `VoteRecord[]` を **純粋関数** `toVoteRecordSummaries` で `VoteRecordSummary[]`（`vote_id`・`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at`。この段階では `image_url = null`）へ写像する。続いて **presign 合成レイヤ** `attachImageUrls` が、各レコードの `image_key`（VoteRecord 由来）から Image_Store（非公開バケット）に対する有効期限付き pre-signed URL（GetObject, 有効期限 3600 秒）を生成して `image_url` に載せる（Req 9.6）。presign に失敗したレコードの `image_url` は null のままとする（Req 9.7）。ハンドラの `GET /elections/{election_id}/results` レスポンス（`ElectionResultsResponse.votes`）はこの `image_url` を付与済みの `VoteRecordSummary` を返す。
+
+**純粋写像と presign（副作用）の分離（設計判断, Req 9.6）**: `toVoteRecordSummaries` は S3 I/O を持たない純粋写像として維持し（`image_url` は常に null を出力）、pre-signed URL の生成という **S3 への副作用** は別レイヤ `attachImageUrls` に切り出して合成する。これにより Property 19（純粋写像は全属性を保存し集計しない）は presign 合成の追加後も成立し続ける（純粋写像の検証対象は変わらず、URL 付与は副作用レイヤの統合テストで扱う, Testing Strategy 参照）。将来の効率化のための GSI は後付け可能（Data Models 参照）。集計（`tally(votes): ElectionResults`, Req 9.3〜9.5）と無効票抽出（`selectInvalidVotes(votes): VoteRecordSummary[]`, Req 12.1）はいずれも Backend には持たず、フロント側の純粋関数として `frontend/src/logic/` に実装する（Frontend セクション / Testing Strategy 参照）。
 
 ---
 
@@ -490,7 +512,8 @@ Backend は指定 `election_id` を保存用ラベルとして扱い、**当該 
       "is_valid": true,
       "recognized_text": "まるまる",
       "reason": "候補者リストの『まるまる』と一致",
-      "created_at": "2026-04-01T12:34:56Z"
+      "created_at": "2026-04-01T12:34:56Z",
+      "image_url": "https://<image-store>/votes/round-1/3f2a9c1e-...png?X-Amz-Expires=3600&..."
     },
     {
       "vote_id": "8b7d...",
@@ -498,7 +521,8 @@ Backend は指定 `election_id` を保存用ラベルとして扱い、**当該 
       "is_valid": false,
       "recognized_text": "しかく",
       "reason": "いずれの候補者とも一致しなかった",
-      "created_at": "2026-04-01T12:35:10Z"
+      "created_at": "2026-04-01T12:35:10Z",
+      "image_url": "https://<image-store>/votes/round-1/8b7d...png?X-Amz-Expires=3600&..."
     },
     {
       "vote_id": "9a0f...",
@@ -506,7 +530,8 @@ Backend は指定 `election_id` を保存用ラベルとして扱い、**当該 
       "is_valid": false,
       "recognized_text": null,
       "reason": "判読不能（confidence が閾値未満）",
-      "created_at": "2026-04-01T12:35:40Z"
+      "created_at": "2026-04-01T12:35:40Z",
+      "image_url": null
     },
     {
       "vote_id": "1c4e...",
@@ -514,13 +539,14 @@ Backend は指定 `election_id` を保存用ラベルとして扱い、**当該 
       "is_valid": true,
       "recognized_text": "ばつばつ",
       "reason": "候補者リストの『バツバツ』と一致",
-      "created_at": "2026-04-01T12:36:02Z"
+      "created_at": "2026-04-01T12:36:02Z",
+      "image_url": "https://<image-store>/votes/round-1/1c4e...png?X-Amz-Expires=3600&..."
     }
   ]
 }
 ```
 
-各レコードはフロント集計（`tally`, Req 9.3〜9.5）に必要な `matched_candidate`・`is_valid` に加え、無効票の詳細表示（`Invalid_Votes_View`, Req 12.1〜12.3）に必要な `recognized_text`（判読不能時 null, Req 12.2）・`reason`・`created_at` を含む票レコード（`VoteRecordSummary`）である。集計・無効票抽出はいずれもフロントが行い、Backend はレコード一覧を返すのみである（PoC 方針）。指定 `election_id` を持つ票レコードが存在しない場合は空配列 `"votes": []` を返す（Requirement 9.2）。Backend は開票回定義を持たないため、未知 election_id でも照合・拒否は行わず、単に該当レコードなし（空配列）として扱う。
+各レコードはフロント集計（`tally`, Req 9.3〜9.5）に必要な `matched_candidate`・`is_valid` に加え、無効票の詳細表示（`Invalid_Votes_View`, Req 12.1〜12.3）に必要な `recognized_text`（判読不能時 null, Req 12.2）・`reason`・`created_at`、および当該投票の手書き画像を表示するための `image_url`（有効期限付き pre-signed URL, Req 9.6。presign 失敗時など利用不可なら null, Req 9.7）を含む票レコード（`VoteRecordSummary`）である。`image_url` は Backend が各レコードの `image_key` から presign して付与する（URL 値は実行時に生成され、上例のホスト名・クエリは説明用のプレースホルダ）。集計・無効票抽出はいずれもフロントが行い、Backend はレコード一覧を返すのみである（PoC 方針）。指定 `election_id` を持つ票レコードが存在しない場合は空配列 `"votes": []` を返す（Requirement 9.2）。Backend は開票回定義を持たないため、未知 election_id でも照合・拒否は行わず、単に該当レコードなし（空配列）として扱う。
 
 ### エラーレスポンス形式
 
@@ -610,6 +636,10 @@ export interface VoteRecordSummary {
   recognized_text: string | null; // 判読不能時 null（Req 9.1 / 12.1 / 12.2）
   reason: string;                  // 判定理由（Req 9.1 / 12.1）
   created_at: string;              // ISO 8601 UTC（Req 9.1 / 12.1）
+  // 当該投票の手書き画像への一時アクセス用 URL（S3 pre-signed URL, Req 9.6 / 12.8）。
+  // Backend が VoteRecord.image_key から presign して付与する。presign 失敗時など利用不可なら null（Req 9.7 / 12.9）。
+  // Invalid_Votes_View（/invalid）が <img src={image_url}> で手書き画像を表示する（Req 12.8）。
+  image_url: string | null;
 }
 
 /** GET results 200 レスポンス契約（Backend は票レコード一覧を返す, Req 9.1 / 9.2） */
@@ -791,12 +821,13 @@ export function getActiveElection(
 | `reason` | String | 判定理由 | 6.4 |
 | `created_at` | String | ISO 8601 UTC | 6.4, 6.6 |
 
-**将来の GSI（後付け可能）**: 開票（Requirement 9）の票レコード読み取りを効率化するため、`election_id` をパーティションキーとする GSI を後から追加できる。v1 ではスキャン + フィルタで十分（デモ規模・想定 ~50 人）だが、スキーマは GSI 追加をそのまま許容する形（`election_id` を全レコードが保持）で設計済みである。Backend は指定 `election_id` の票レコード一覧（`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at` を含む `VoteRecordSummary`）を返すのみで、集計（`is_valid=true` を `matched_candidate` ごとにカウント, Req 9.3〜9.5）および無効票抽出（`is_valid=false` の詳細抽出, Req 12.1）は Frontend が行う。
+**将来の GSI（後付け可能）**: 開票（Requirement 9）の票レコード読み取りを効率化するため、`election_id` をパーティションキーとする GSI を後から追加できる。v1 ではスキャン + フィルタで十分（デモ規模・想定 ~50 人）だが、スキーマは GSI 追加をそのまま許容する形（`election_id` を全レコードが保持）で設計済みである。Backend は指定 `election_id` の票レコード一覧（`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at`・`image_url` を含む `VoteRecordSummary`）を返すのみで、集計（`is_valid=true` を `matched_candidate` ごとにカウント, Req 9.3〜9.5）および無効票抽出（`is_valid=false` の詳細抽出, Req 12.1）は Frontend が行う。`image_url` は `image_key` から生成する pre-signed URL であり DynamoDB には保存しない（読み取り時に presign して付与する, Req 9.6）。
 
 ### S3: Image_Store
 
 - 手書き画像 PNG を保管。オブジェクトキーは `votes/{election_id}/{vote_id}.png` 形式。
-- 非公開バケット（Security セクション参照）。
+- **非公開バケットのまま維持**（Security セクション参照）。CloudFront/OAC による公開や公開化は行わない。
+- 無効票詳細画面（`/invalid`）での手書き画像表示は、Backend が `image_key` から生成する **有効期限付き pre-signed URL（GetObject, 有効期限 3600 秒）** 経由でのみ一時的に許可する（Req 9.6 / 12.8）。
 
 ---
 
@@ -910,13 +941,13 @@ export function getActiveElection(
 
 ### Property 18: フロント無効票抽出は無効票のみを決定的順序で返す
 
-*For any* `VoteRecordSummary` の集合について、フロント側 `selectInvalidVotes` の結果は、(a) 各要素の `is_valid` が false であり、(b) `is_valid = true` の投票を一切含まず、(c) 入力中の `is_valid = false` の投票の部分列（過不足なく同一集合）であり、(d) 並び順が決定的（`created_at` 昇順を第一キー、同時刻は `vote_id` 昇順を第二キー）であり、(e) 返された各無効票は入力の `vote_id`・`recognized_text`（null を含む）・`reason`・`created_at` を保持する。無効票が存在しない入力（全件 `is_valid = true` または空集合）では結果は空配列となる。
+*For any* `VoteRecordSummary` の集合について、フロント側 `selectInvalidVotes` の結果は、(a) 各要素の `is_valid` が false であり、(b) `is_valid = true` の投票を一切含まず、(c) 入力中の `is_valid = false` の投票の部分列（過不足なく同一集合）であり、(d) 並び順が決定的（`created_at` 昇順を第一キー、同時刻は `vote_id` 昇順を第二キー）であり、(e) 返された各無効票は入力の `vote_id`・`recognized_text`（null を含む）・`reason`・`created_at`・`image_url`（null を含む）を保持する。無効票が存在しない入力（全件 `is_valid = true` または空集合）では結果は空配列となる。
 
 **Validates: Requirements 12.1**
 
 ### Property 19: 票レコード写像は全属性を保存し集計しない
 
-*For any* `VoteRecord` の配列について、Backend の `toVoteRecordSummaries` は入力と同じ件数・同じ順序の `VoteRecordSummary` を返し、各要素は対応する入力レコードの `vote_id`・`matched_candidate`・`is_valid`・`recognized_text`（null を含む）・`reason`・`created_at` を過不足なく保持する（集計・抽出・フィルタを行わない）。
+*For any* `VoteRecord` の配列について、Backend の純粋写像 `toVoteRecordSummaries` は入力と同じ件数・同じ順序の `VoteRecordSummary` を返し、各要素は対応する入力レコードの `vote_id`・`matched_candidate`・`is_valid`・`recognized_text`（null を含む）・`reason`・`created_at` を過不足なく保持する（集計・抽出・フィルタを行わない）。`image_url` の付与は S3 presign（副作用）を伴うため純粋写像の関心外であり、`toVoteRecordSummaries` は `image_url` を常に null として出力する（pre-signed URL の合成は後段の `attachImageUrls` レイヤが担う, Req 9.6）。したがって本プロパティは presign 合成レイヤの追加後も成立する。
 
 **Validates: Requirements 9.1**
 
@@ -1005,8 +1036,8 @@ Backend のエラー `code`（および通信タイムアウト）を、投票�
 ### Unit / Integration / E2E の役割分担
 
 - **Unit（例・エッジ）**: UI 分岐（Req 1.1, 1.4〜1.6, 3.1〜3.8, 7.2, 7.3, 7.5, 8.4, 8.5, 11.5）、アクティブ開票回表示コンポーネント（`ActiveElectionBanner`）が `getActiveElection()` の Election のタイトルと Candidate_List を固定表示すること、および `activeElectionId` 設定不正時の投票不可・受付停止フォールバック表示（Req 2.1, 2.2, 2.5）、投票時に election_id と candidates をリクエストへ含めること（Req 2.3, 2.4, 3.3）、リトライ回数（Req 5.10, 6.7, 8.3）。加えて、投票ページの `ResultView` が完了メッセージのみを表示し `is_valid`・`matched_candidate`・`confidence`・`reason`・`recognized_text` などの判定詳細を表示しないこと（Req 7.2）。React 側は React Testing Library、タイマー系は fake timers を使用。
-- **Unit（無効票詳細画面・運営者エリア, want）**: `InvalidVotesView`（`/invalid`）が抽出済み無効票の `vote_id`・`recognized_text`・`reason`・`created_at` を一覧表示すること（Req 12.1）、`recognized_text` が null のとき判読不能である旨を表示すること（Req 12.2）、無効票ゼロ件時に「無効票なし」を表示すること（Req 12.3）、`/results` へのリンクを表示すること（Req 12.5）、`reason` などの判定詳細を表示すること（Req 12.7）。`ResultsView`（`/results`）が `/invalid` へのリンクを表示すること（Req 12.4）。`VotePage`（`/`）が `/results`・`/invalid` へのリンクを一切持たないこと（相互遷移の分離, Req 12.6）。React Testing Library でレンダリングと遷移リンク（`react-router-dom`）を検証する。無効票抽出そのものの網羅検証は Property 18 で行う。
-- **Integration**: Bedrock 呼び出し配線とプロンプト内容（受け取った candidates を渡すこと, Req 5.1）、S3 保存・キー取得（Req 6.1, 6.2）、`GET /elections/{election_id}/results` が指定 election_id の票レコード一覧（各レコードが `vote_id`・`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at` を含む）を返し、該当なしで空配列を返すこと（集計・無効票抽出をしないこと, Req 9.1, 9.2）。写像そのもの（全属性保存・非集計）の網羅検証は Property 19 で行う。**Bedrock は必ずモック**し、コストと非決定性を排除する。DynamoDB は **DynamoDB Local** を用いて実接続に近い検証を行う（moto 等の代替も可）。S3 は `aws-sdk-client-mock` 等でモック。
+- **Unit（無効票詳細画面・運営者エリア, want）**: `InvalidVotesView`（`/invalid`）が抽出済み無効票の `vote_id`・`recognized_text`・`reason`・`created_at` を一覧表示すること（Req 12.1）、`recognized_text` が null のとき判読不能である旨を表示すること（Req 12.2）、無効票ゼロ件時に「無効票なし」を表示すること（Req 12.3）、`/results` へのリンクを表示すること（Req 12.5）、`reason` などの判定詳細を表示すること（Req 12.7）、`image_url` が非 null のとき `<img src={image_url}>` で手書き画像を表示すること（Req 12.8）、`image_url` が null または画像読み込み失敗（`onError`）時にプレースホルダを表示すること（Req 12.9）。`ResultsView`（`/results`）が `/invalid` へのリンクを表示すること（Req 12.4）。`VotePage`（`/`）が `/results`・`/invalid` へのリンクを一切持たないこと（相互遷移の分離, Req 12.6）。React Testing Library でレンダリングと遷移リンク（`react-router-dom`）を検証する。無効票抽出そのものの網羅検証は Property 18 で行う。
+- **Integration**: Bedrock 呼び出し配線とプロンプト内容（受け取った candidates を渡すこと, Req 5.1）、S3 保存・キー取得（Req 6.1, 6.2）、`GET /elections/{election_id}/results` が指定 election_id の票レコード一覧（各レコードが `vote_id`・`matched_candidate`・`is_valid`・`recognized_text`・`reason`・`created_at`・`image_url` を含む）を返し、該当なしで空配列を返すこと（集計・無効票抽出をしないこと, Req 9.1, 9.2）。純粋写像そのもの（全属性保存・非集計）の網羅検証は Property 19 で行う。**presign 合成レイヤ `attachImageUrls`** は副作用（S3 presign）を伴うため統合テストで扱う: 各レコードの `image_key` から pre-signed URL が付与されること（Req 9.6）、presign 失敗レコードは `image_url = null` になること（Req 9.7）を、S3 presign をモックして検証する。**Bedrock は必ずモック**し、コストと非決定性を排除する。DynamoDB は **DynamoDB Local** を用いて実接続に近い検証を行う（moto 等の代替も可）。S3 は `aws-sdk-client-mock` 等でモック。
 - **構造制約（SMOKE / static）**: monorepo ディレクトリ存在（Req 11.1）、frontend↔backend 直接 import なし（Req 11.2、依存グラフ / lint ルールで検査）、`shared/` が型・契約のみで設定データ・ローダ・実行ロジックを含まない（Req 11.3、静的検査）、Elections がフロント専用設定ファイル `frontend/src/config/elections.config.json`（Elections_Config）で管理され Backend が開票回・候補者定義を持たず Elections_Config を参照しない構成（Req 10.1, 10.2、コードに Election をハードコードしていないこと・backend が Elections を参照しないことを静的検査）。加えて、実際の `frontend/src/config/elections.config.json` が `parseElectionsConfig` の検証を通過すること（同梱設定の妥当性。`activeElectionId` が `elections` 内の `election_id` を指すことを含む）をフロントのビルド時に確認する smoke テストを置く。設定形式の妥当性検証そのもの（election_id 一意・必須フィールド具備・candidate id 一意・name 長・activeElectionId 整合、Req 10.3, 10.5, 10.6, 10.7, 10.8, 10.9）は Property 17 で網羅的に検証する。
 - **E2E**: ブラウザから CloudFront 経由の静的配信、アクティブ開票回（`activeElectionId` に対応する Election）の固定表示、`POST /votes`（image・election_id・candidates を含む）の成功・各エラー（VALIDATION_ERROR / LIST_INVALID / ANALYSIS_FAILED / STORAGE_FAILED）、`GET /elections/{election_id}/results` で票レコード一覧を取得しフロントが集計表示するシナリオ、および運営者エリア（`/results` ⇄ `/invalid` の相互遷移、`/invalid` で無効票詳細を表示、投票ページ `/` からは運営者エリアへ遷移できないこと, Req 12.4〜12.6）を代表例で検証。Bedrock はステージ環境でモックまたは限定実呼び出し。
 
@@ -1040,6 +1071,7 @@ Backend のエラー `code`（および通信タイムアウト）を、投票�
 
 - **デモ用途である旨（再掲）**: 本アプリはエンタメ / デモ / 学習用であり、本物の投票システムに求められる **匿名性・改竄防止・二重投票防止・監査証跡は対象外** とする（Requirement Introduction）。この前提のもとで以下の最低限の保護のみを行う。
 - **S3 バケット非公開 + CloudFront OAC**: 静的配信バケットも Image_Store も **非公開**とし、静的配信は **CloudFront + OAC（Origin Access Control）** 経由でのみアクセス可能にする。バケットへの直接パブリックアクセスは遮断する。
+- **Image_Store は非公開のまま pre-signed URL で一時アクセス（Req 9.6 / 12.8）**: 無効票詳細画面（`/invalid`）での手書き画像表示は、Image_Store を公開せず、Backend が `image_key` から生成する **有効期限付き pre-signed URL（GetObject, 有効期限 3600 秒程度: 運営者が画面を開いている間に切れない程度）** 経由でのみ一時的に許可する。Image_Store の公開化・CloudFront/OAC 公開は行わない。pre-signed URL 生成のため Lambda 実行ロールに Image_Store オブジェクトへの `s3:GetObject` 権限を付与する。
 - **CORS**: API Gateway に CloudFront 配信元オリジンを許可する CORS 設定を行い、`POST /votes` と `GET /elections/{id}/results` を許可する。
 - **規模と構成の妥当性**: 想定同時利用は最大 ~50 人規模のデモであり、**Lambda 同期 1 本** の構成で十分にさばける。Step Functions / SQS 等の非同期基盤は不要（v1 方針）。X-Ray でボトルネック（主に Bedrock レイテンシ）を可視化する。
 - **コスト**: 主コストは Bedrock のマルチモーダル推論呼び出し。DynamoDB / S3 / Lambda はデモ規模では軽微。開票（results）は v1 でスキャンだが小規模のため許容、規模拡大時は `election_id` GSI で最適化する（Data Models 参照）。集計はフロントで行うため Backend の集計コストは発生しない。
@@ -1059,7 +1091,7 @@ Backend のエラー `code`（および通信タイムアウト）を、投票�
 | 6: 投票結果の保存 | Components (Storage_Module), Property 9, 10, 11, Data Models |
 | 7: 投票結果の応答（投票ページは完了メッセージのみ） | Components (Frontend ResultView: 完了メッセージのみ・判定詳細非表示 Req 7.2), API 契約, Property 12, 13, Testing Strategy(Unit) |
 | 8: エラーハンドリング | Error Handling, Property 8, 11 |
-| 9: 開票結果表示（Backend は拡張 VoteRecordSummary 一覧を返す / フロント集計） | Components (Backend Results 読み取り: toVoteRecordSummaries が recognized_text・reason・created_at も写像, Frontend ResultsView + tally), API 契約（票レコード一覧: 6 フィールド）, Data Models(VoteRecordSummary 拡張, Votes_Table, GSI), Property 14, 15, 19, Testing Strategy(Integration) |
+| 9: 開票結果表示（Backend は拡張 VoteRecordSummary 一覧を返す / フロント集計 / image_url 付与） | Components (Backend Results 読み取り: 純粋写像 toVoteRecordSummaries が recognized_text・reason・created_at を写像し image_url=null、presign 合成レイヤ attachImageUrls が image_url を付与 Req 9.6/9.7, Frontend ResultsView + tally), API 契約（票レコード一覧: 7 フィールド, image_url 含む）, Data Models(VoteRecordSummary 拡張: image_url, Votes_Table, Image_Store, GSI), Property 14, 15, 19, Testing Strategy(Integration: presign 合成) |
 | 10: 開票回設定の管理（フロントエンド専用, activeElectionId 管理を含む） | frontend/src/config/elections.config.json（Elections_Config: activeElectionId + elections）+ frontend/src/config/elections.ts（parseElectionsConfig / validateElectionsConfig ローダ・検証, findElection, getActiveElection, ACTIVE_ELECTION_ID）, Data Models, Components (Frontend), Property 17, Testing Strategy(構造制約 / 設定妥当性 smoke), Error Handling(CONFIG_INVALID はフロントビルド時) |
 | 11: モノレポ構成と疎結合（shared は型・契約のみ） | リポジトリ構成, shared/types.ts（型・API 契約のみ）, Property 13, Testing Strategy(構造制約) |
-| 12: 無効票の表示（運営者向け, /invalid） | Components (Frontend / InvalidVotesView + ResultsView 相互リンク, ルーティング方針: /results ⇄ /invalid 相互遷移・/ から分離), frontend/src/logic/invalidVotes.ts（selectInvalidVotes 純粋関数）, API 契約（VoteRecordSummary に recognized_text・reason・created_at）, Property 18, Testing Strategy(Unit: 無効票詳細画面 / E2E: 運営者エリア遷移) |
+| 12: 無効票の表示（運営者向け, /invalid, 手書き画像表示を含む） | Components (Frontend / InvalidVotesView: 手書き画像 <img src={image_url}> 表示 + null/取得失敗時プレースホルダ Req 12.8/12.9 + ResultsView 相互リンク, ルーティング方針: /results ⇄ /invalid 相互遷移・/ から分離), frontend/src/logic/invalidVotes.ts（selectInvalidVotes 純粋関数, image_url も保持）, API 契約（VoteRecordSummary に recognized_text・reason・created_at・image_url）, Security（Image_Store 非公開 + pre-signed URL）, Property 18, Testing Strategy(Unit: 無効票詳細画面の画像/プレースホルダ / E2E: 運営者エリア遷移) |

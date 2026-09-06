@@ -55,6 +55,10 @@ export interface VoteRecordSummary {
   recognized_text: string | null; // 判読不能時 null（Req 12.2）
   reason: string; // 無効判定の理由など（Req 12.1）
   created_at: string; // ISO 8601 UTC（Req 12.1、並び順の第一キー）
+  // 当該投票の手書き画像への一時アクセス用 pre-signed URL（Req 9.6 / 12.8）。
+  // Backend が VoteRecord.image_key から presign して付与する。presign 失敗時など利用不可なら null（Req 9.7 / 12.9）。
+  // Invalid_Votes_View（/invalid）が <img src={image_url}> で手書き画像を表示する（Req 12.8）。
+  image_url: string | null;
 }
 
 /** GET results 200 レスポンス契約（Backend は票レコード一覧を返す, Req 9.1 / 9.2） */
