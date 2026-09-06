@@ -14,6 +14,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 
 // ESM のため __dirname 相当をファイル URL から解決する。
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -107,7 +108,18 @@ export class ApiStack extends Stack {
     // -----------------------------------------------------------------------
     const handlerEntry = path.join(currentDir, '..', '..', 'backend', 'src', 'handler.ts');
 
+    // Backend Lambda のロググループを CDK で明示管理する。
+    // これを指定しない場合、Lambda 実行時に AWS が /aws/lambda/<fn> を自動作成し、
+    // CloudFormation 管理外のリソースとして残ってしまう（スタック削除しても消えない）。
+    // 明示作成 + RemovalPolicy.DESTROY により、スタック削除でロググループも消える。
+    // 保持期間はデモ用途のため 1 週間に抑える。
+    const backendLogGroup = new logs.LogGroup(this, 'BackendHandlerLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     this.handler = new NodejsFunction(this, 'BackendHandler', {
+      logGroup: backendLogGroup,
       entry: handlerEntry,
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -171,6 +183,13 @@ export class ApiStack extends Stack {
     // design.md Security: CloudFront 配信元オリジンを許可する。デモ用途では緩めに全許可。
     const allowedOrigins = props?.allowedOrigins ?? apigateway.Cors.ALL_ORIGINS;
 
+    // API Gateway アクセスログのロググループも CDK で明示管理する（CFn 管理外に残さない）。
+    // RemovalPolicy.DESTROY によりスタック削除で消え、保持期間はデモ用途で 1 週間に抑える。
+    const apiAccessLogGroup = new logs.LogGroup(this, 'VoteApiAccessLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     this.api = new apigateway.RestApi(this, 'VoteApi', {
       restApiName: 'tegaki-vote-api',
       description: '手書き投票デモ API（POST /votes, GET /elections/{id}/results）',
@@ -178,6 +197,9 @@ export class ApiStack extends Stack {
         // API Gateway の X-Ray トレースを有効化（design.md トレーサビリティ）。
         tracingEnabled: true,
         stageName: 'prod',
+        // アクセスログを CDK 管理のロググループへ出力する（CFn 管理外に残さない）。
+        accessLogDestination: new apigateway.LogGroupLogDestination(apiAccessLogGroup),
+        accessLogFormat: apigateway.AccessLogFormat.clf(),
       },
       defaultCorsPreflightOptions: {
         allowOrigins: allowedOrigins,
