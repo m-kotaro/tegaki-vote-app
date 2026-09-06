@@ -5,9 +5,22 @@
       "election_id": "round-1",
       "title": "第1回 開票",
       "candidates": [
-        { "id": "candidate-1", "name": "まるまる" },
-        { "id": "candidate-2", "name": "バツバツ" },
-        { "id": "candidate-3", "name": "三角三角" }
+        {
+          "id": "candidate-1",
+          "name": "ねこ"
+        },
+        {
+          "id": "candidate-2",
+          "name": "いぬ"
+        },
+        {
+          "id": "candidate-3",
+          "name": "ぱんだ"
+        },
+        {
+          "id": "candidate-4",
+          "name": "うさぎ"
+        }
       ]
     },
     {

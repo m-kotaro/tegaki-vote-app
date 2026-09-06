@@ -14,6 +14,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as logs from 'aws-cdk-lib/aws-logs';
 
 // ESM のため __dirname 相当をファイル URL から解決する。
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -21,10 +22,11 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 /**
  * バックエンド Lambda が呼び出す Bedrock モデル ID（推論プロファイル ID）。
  * design.md「Bedrock プロンプト設計」および backend の DEFAULT_BEDROCK_MODEL_ID に合わせる。
- * デプロイ先リージョンに応じて `us.` / `apac.` / `eu.` プレフィックスへ変更する
+ * 既定は最新の Claude Sonnet 5（`global.` グローバル推論プロファイル）。リージョン限定で
+ * 使う場合は `us.` / `apac.` / `eu.` / `jp.` プレフィックスの推論プロファイル ID へ変更する
  * （props.bedrockModelId で差し替え可能）。
  */
-const DEFAULT_BEDROCK_MODEL_ID = 'apac.anthropic.claude-sonnet-4-20250514-v1:0';
+const DEFAULT_BEDROCK_MODEL_ID = 'jp.anthropic.claude-sonnet-4-5-20250929-v1:0';
 
 export interface ApiStackProps extends StackProps {
   /**
@@ -88,9 +90,12 @@ export class ApiStack extends Stack {
       publicReadAccess: false,
       encryption: s3.BucketEncryption.S3_MANAGED,
       enforceSSL: true,
-      // デモ用途: スタック削除時にバケットも破棄しオブジェクトも自動削除する。
+      // スタック削除時はバケットも破棄する（RemovalPolicy.DESTROY）。
+      // ただし autoDeleteObjects はあえて有効化しない。中身（手書き画像）が残った
+      // バケットは DeleteBucket が失敗し、CloudFormation のスタック削除自体が失敗する。
+      // これにより「データが残っているのに気づかず削除される」ことを防ぐ（明示的な安全策）。
+      // 完全に破棄したい場合は先にバケットを空にしてから cdk destroy すること。
       removalPolicy: RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
     });
 
     // -----------------------------------------------------------------------
@@ -103,7 +108,18 @@ export class ApiStack extends Stack {
     // -----------------------------------------------------------------------
     const handlerEntry = path.join(currentDir, '..', '..', 'backend', 'src', 'handler.ts');
 
+    // Backend Lambda のロググループを CDK で明示管理する。
+    // これを指定しない場合、Lambda 実行時に AWS が /aws/lambda/<fn> を自動作成し、
+    // CloudFormation 管理外のリソースとして残ってしまう（スタック削除しても消えない）。
+    // 明示作成 + RemovalPolicy.DESTROY により、スタック削除でロググループも消える。
+    // 保持期間はデモ用途のため 1 週間に抑える。
+    const backendLogGroup = new logs.LogGroup(this, 'BackendHandlerLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     this.handler = new NodejsFunction(this, 'BackendHandler', {
+      logGroup: backendLogGroup,
       entry: handlerEntry,
       handler: 'handler',
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -135,11 +151,15 @@ export class ApiStack extends Stack {
     // -----------------------------------------------------------------------
     // IAM 権限（最小権限）。
     // - Votes_Table への読み書き（Storage の書き込み / results のスキャン読み取り）
-    // - Image_Store への読み書き（画像保存 / ロールバック削除）
+    // - Image_Store への読み書き（画像保存 PutObject / ロールバック削除 DeleteObject /
+    //   pre-signed URL 生成のための GetObject, Req 9.6 / 12.8）。grantReadWrite は
+    //   s3:GetObject を含む最小権限であり、バケットは非公開のまま維持する
+    //   （公開化・パブリックアクセス許可・CloudFront/OAC 公開は行わない）。
     // - Bedrock InvokeModel（マルチモーダル解析）。推論プロファイル ID / foundation model
     //   双方の ARN パターンを許可する。
     // -----------------------------------------------------------------------
     this.votesTable.grantReadWriteData(this.handler);
+    // grantReadWrite は GetObject（pre-signed URL 生成）/ PutObject / DeleteObject を付与する。
     this.imageBucket.grantReadWrite(this.handler);
 
     // Bedrock InvokeModel: 推論プロファイル（inference-profile）とその背後の
@@ -163,6 +183,13 @@ export class ApiStack extends Stack {
     // design.md Security: CloudFront 配信元オリジンを許可する。デモ用途では緩めに全許可。
     const allowedOrigins = props?.allowedOrigins ?? apigateway.Cors.ALL_ORIGINS;
 
+    // API Gateway アクセスログのロググループも CDK で明示管理する（CFn 管理外に残さない）。
+    // RemovalPolicy.DESTROY によりスタック削除で消え、保持期間はデモ用途で 1 週間に抑える。
+    const apiAccessLogGroup = new logs.LogGroup(this, 'VoteApiAccessLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     this.api = new apigateway.RestApi(this, 'VoteApi', {
       restApiName: 'tegaki-vote-api',
       description: '手書き投票デモ API（POST /votes, GET /elections/{id}/results）',
@@ -170,6 +197,9 @@ export class ApiStack extends Stack {
         // API Gateway の X-Ray トレースを有効化（design.md トレーサビリティ）。
         tracingEnabled: true,
         stageName: 'prod',
+        // アクセスログを CDK 管理のロググループへ出力する（CFn 管理外に残さない）。
+        accessLogDestination: new apigateway.LogGroupLogDestination(apiAccessLogGroup),
+        accessLogFormat: apigateway.AccessLogFormat.clf(),
       },
       defaultCorsPreflightOptions: {
         allowOrigins: allowedOrigins,

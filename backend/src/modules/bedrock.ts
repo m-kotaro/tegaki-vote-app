@@ -250,9 +250,18 @@ export async function invokeBedrock(
       lastMessage = err instanceof Error ? err.message : String(err);
       // タイムアウト / エラー / JSON パース失敗はいずれもリトライ対象。
       // 最終試行で失敗した場合はループを抜けて ok:false を返す。
+      // 切り分けのため各試行の失敗を CloudWatch に記録する（エラー名・メッセージ）。
+      const name = err instanceof Error ? err.name : "UnknownError";
+      console.error(
+        `[bedrock] Converse 呼び出し失敗 (attempt ${attempt + 1}/${totalAttempts}, modelId=${config.modelId}): ${name}: ${lastMessage}`,
+      );
     }
   }
 
+  // 全試行が失敗した。呼び出し元は ANALYSIS_FAILED にマップする。
+  console.error(
+    `[bedrock] 全 ${totalAttempts} 回の試行が失敗しました (modelId=${config.modelId}): ${lastMessage}`,
+  );
   return { ok: false, message: lastMessage };
 }
 

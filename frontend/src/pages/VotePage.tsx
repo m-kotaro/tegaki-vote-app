@@ -176,6 +176,8 @@ export function VotePage(): React.JSX.Element {
 
         if (res.ok) {
           // 200 成功 → counting 終了 → 結果表示（Req 3.8 / 7.2〜7.4）。
+          // 次の投票に備えて手書き内容を消去する。
+          canvasRef.current?.clear();
           setResult(res.data);
           setErrorKind(null);
           setPhase("result");

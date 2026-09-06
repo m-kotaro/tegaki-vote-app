@@ -247,6 +247,38 @@
   - デモ用途のため任意。`cdk deploy` で静的配信・API スタックを実 AWS へ apply する
   - _Requirements: 11.1_
 
+- [ ] 13. 無効票の手書き画像表示（/invalid, S3 pre-signed URL 方式）
+  - [ ] 13.1 shared: VoteRecordSummary に image_url を追加する
+    - `shared/types.ts` の `VoteRecordSummary` に `image_url: string | null`（当該投票の手書き画像への一時アクセス用 pre-signed URL。presign 失敗時など利用不可なら null）を追加し、役割コメントを付ける
+    - 型のみ（実行ロジックを含めない）
+    - _Requirements: 9.6, 9.7, 12.8_
+
+  - [ ] 13.2 backend: results 読み取りに pre-signed URL 合成レイヤを実装する
+    - 純粋写像 `toVoteRecordSummaries` は `image_url` を常に null として出力し、集計・抽出をしない純粋性を維持する（Property 19 と両立）
+    - presign 合成レイヤ `attachImageUrls` を実装し、各票レコードの `image_key` から Image_Store（非公開バケット）に対する有効期限付き pre-signed URL（GetObject, 有効期限 3600 秒）を生成して `image_url` に載せる
+    - presign に失敗したレコードは `image_url = null` とし、他レコードの処理は継続する
+    - `readVotesByElection` を純粋写像 → presign 合成の 2 段構成に更新し、`GET /elections/{election_id}/results` 応答の各レコードに `image_url` を含める
+    - _Requirements: 9.1, 9.6, 9.7, 12.8_
+
+  - [ ] 13.3 infra: Lambda 実行ロールに Image_Store の s3:GetObject を許可する
+    - pre-signed URL（GetObject）生成のため、Lambda 実行ロールに Image_Store オブジェクトへの `s3:GetObject` 権限を付与する（Image_Store は非公開のまま維持し、公開化・CloudFront/OAC 公開は行わない）
+    - _Requirements: 9.6, 12.8_
+
+  - [ ] 13.4 frontend: InvalidVotesPage に手書き画像表示を追加する
+    - `selectInvalidVotes` は `image_url`（null 含む）を保持したまま無効票を抽出する（既存の抽出ロジックを壊さない）
+    - `InvalidVotesPage`（`/invalid`）の各無効票行に、票レコードの `image_url` を用いた `<img src={image_url}>` で手書き画像を表示する
+    - `image_url` が null、または `<img>` の読み込み失敗（`onError`）時は「画像なし」等のプレースホルダを表示する
+    - 画像表示は `/invalid` 画面のみで行い、`/results` 画面は変更しない
+    - _Requirements: 12.8, 12.9_
+
+  - [ ]* 13.5 backend: presign 合成レイヤの統合テストを書く（S3 presign モック）
+    - `attachImageUrls` が各 `image_key` から pre-signed URL を付与すること、presign 失敗レコードの `image_url` が null になることを、S3 presign をモックして検証する
+    - _Requirements: 9.6, 9.7_
+
+  - [ ]* 13.6 frontend: InvalidVotesPage 画像表示のユニットテストを書く
+    - `image_url` 非 null 時に `<img src={image_url}>` を描画すること、null または `onError` 時にプレースホルダを表示することを React Testing Library で検証する
+    - _Requirements: 12.8, 12.9_
+
 ## Notes
 
 - タスクに `*` が付いたサブタスクは任意（テストや任意デプロイ）であり、MVP を急ぐ場合はスキップ可能。トップレベルタスクには `*` を付けない。
@@ -267,7 +299,9 @@
     { "id": 3, "tasks": ["3.2", "3.3", "3.5", "3.7", "3.8", "3.9", "3.10", "3.12", "3.13", "3.15", "3.16", "3.18", "5.1", "5.3", "7.2", "7.5", "7.9", "7.11", "9.2"] },
     { "id": 4, "tasks": ["5.2", "5.4", "5.5", "5.6", "7.3", "7.4", "7.6", "7.7", "7.10", "7.12", "9.3"] },
     { "id": 5, "tasks": ["5.7", "5.8", "5.9", "7.8"] },
-    { "id": 6, "tasks": ["10.1", "10.2", "12"] }
+    { "id": 6, "tasks": ["10.1", "10.2", "12", "13.1", "13.3"] },
+    { "id": 7, "tasks": ["13.2", "13.4"] },
+    { "id": 8, "tasks": ["13.5", "13.6"] }
   ]
 }
 ```
