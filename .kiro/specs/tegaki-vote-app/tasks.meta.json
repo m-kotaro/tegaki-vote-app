@@ -1,0 +1,432 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. monorepo スキャフォールドと TypeScript workspaces 設定": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593061
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906606001
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906853118
+      }
+    ],
+    "2.1 shared/types.ts に契約型を定義する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593144
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906861252
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906957788
+      }
+    ],
+    "2.2 shared/elections.ts に ELECTIONS 定数と findElection ヘルパを実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593184
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906962578
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907047089
+      }
+    ],
+    "3.1 Receiver: validateVoteRequest（入力検証）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593211
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907054584
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907444432
+      }
+    ],
+    "3.4 候補者リスト妥当性検証関数を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593232
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907055887
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907449391
+      }
+    ],
+    "3.6 Analyzer: normalizeAnalysis（解析結果正規化）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593252
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907057303
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907445776
+      }
+    ],
+    "3.11 Storage: buildRecord（レコードビルダ）と vote_id 生成を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593292
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907058261
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907446738
+      }
+    ],
+    "3.14 Results: tally（開票集計）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593311
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907059505
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907448121
+      }
+    ],
+    "3.17 200 レスポンスビルダ（VoteResult 構築）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593331
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907455904
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907860880
+      }
+    ],
+    "4. Checkpoint - backend 純粋ロジックのテストを通す": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593351
+      }
+    ],
+    "5.1 Bedrock クライアントラッパを実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593372
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907907954
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908159457
+      }
+    ],
+    "5.3 Storage 配線（S3 + DynamoDB）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593392
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907909133
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908161977
+      }
+    ],
+    "5.6 Lambda handler ルーティングを実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593414
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908162075
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908337775
+      }
+    ],
+    "6. Checkpoint - backend 全体のテストを通す": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593457
+      }
+    ],
+    "7.1 frontend スキャフォールドと API クライアント（モック差し替え可能）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593475
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907457305
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907863186
+      }
+    ],
+    "7.2 CanvasComponent を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593493
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908339077
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908506206
+      }
+    ],
+    "7.5 ElectionSelector と開票回選択状態を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593511
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908340657
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908507600
+      }
+    ],
+    "7.7 VoteButton / VoteAnimation / CountingIndicator と投票送信状態遷移を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593530
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908511362
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908739632
+      }
+    ],
+    "7.9 ResultView と confidence パーセント変換を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593558
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908341947
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908508989
+      }
+    ],
+    "7.11 ErrorNotice とエラー種別表示を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593576
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908343089
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908509948
+      }
+    ],
+    "8. Checkpoint - frontend のテストを通し、モック API で単体起動を確認する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593614
+      }
+    ],
+    "9.1 静的配信スタック（S3 + CloudFront OAC）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593632
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907458276
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907862051
+      }
+    ],
+    "9.2 API/バックエンドスタック（API Gateway + Lambda + DynamoDB + S3 + Bedrock 権限 + X-Ray）を実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593652
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908741064
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787909268798
+      }
+    ],
+    "10.1 E2E テストを実装する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593670
+      }
+    ],
+    "10.2 docs/architecture.md を作成する": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593691
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908742161
+      },
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787909270066
+      }
+    ],
+    "11. Final checkpoint - 全テストとビルドを通す": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787906593709
+      }
+    ],
+    "2. shared パッケージ: 型定義・定数・参照ヘルパ": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907047135
+      }
+    ],
+    "3. backend 純粋ロジックとその property-based テスト": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787907860925
+      }
+    ],
+    "5. backend 副作用配線": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908337821
+      }
+    ],
+    "7. frontend 実装（早期に API モックで単体起動）": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787908739664
+      }
+    ],
+    "9. infra 実装（AWS CDK / TypeScript）": [
+      {
+        "executionId": "b903487a-6327-4ddd-9d3b-1d55d07a188b",
+        "chatSessionId": "sess_78a73323-ae33-4d6b-9875-147cf88636fe",
+        "timestamp": 1787909268824
+      }
+    ]
+  }
+}

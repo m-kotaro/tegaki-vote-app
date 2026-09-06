@@ -1,0 +1,21 @@
+{
+  "name": "@tegaki/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lambda ハンドラと Receiver / Analyzer / Storage モジュール",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.637.0",
+    "@aws-sdk/client-dynamodb": "^3.637.0",
+    "@aws-sdk/client-s3": "^3.637.0",
+    "@aws-sdk/lib-dynamodb": "^3.637.0",
+    "@tegaki/shared": "*"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145"
+  }
+}

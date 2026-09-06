@@ -1,0 +1,24 @@
+{
+  "activeElectionId": "round-1",
+  "elections": [
+    {
+      "election_id": "round-1",
+      "title": "第1回 開票",
+      "candidates": [
+        { "id": "candidate-1", "name": "まるまる" },
+        { "id": "candidate-2", "name": "バツバツ" },
+        { "id": "candidate-3", "name": "三角三角" }
+      ]
+    },
+    {
+      "election_id": "round-2",
+      "title": "第2回 開票",
+      "candidates": []
+    },
+    {
+      "election_id": "round-3",
+      "title": "第3回 開票",
+      "candidates": []
+    }
+  ]
+}

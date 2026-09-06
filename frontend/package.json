@@ -1,0 +1,33 @@
+{
+  "name": "@tegaki/frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "React + Vite アプリ（Canvas・投票 UI・結果表示）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.build.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@tegaki/shared": "*",
+    "framer-motion": "^12.15.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^6.30.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "msw": "^2.15.0",
+    "vite": "^8.2.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}
