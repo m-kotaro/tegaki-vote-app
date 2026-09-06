@@ -102,6 +102,7 @@ export function ResultsPage(): React.JSX.Element {
         padding: "1.5rem",
         maxWidth: 720,
         margin: "0 auto",
+        backgroundColor: "#ffffff",
       }}
     >
       <h1>開票結果</h1>

@@ -1,0 +1,17 @@
+/* frontend/src/index.css
+ * グローバルなベーススタイル。
+ * 背景色は白を明示する（Game Plaza などへ埋め込んだ際、親の背景色に左右されないため）。
+ * 全ページ（投票 / 開票結果 / 無効票）共通で白背景を保証する。
+ */
+
+html,
+body {
+  margin: 0;
+  background-color: #ffffff;
+  color: #111111;
+}
+
+#root {
+  background-color: #ffffff;
+  min-height: 100vh;
+}

@@ -107,6 +107,7 @@ export function InvalidVotesPage(): React.JSX.Element {
         padding: "1.5rem",
         maxWidth: 720,
         margin: "0 auto",
+        backgroundColor: "#ffffff",
       }}
     >
       <h1>無効票詳細</h1>

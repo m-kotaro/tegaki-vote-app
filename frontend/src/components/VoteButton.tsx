@@ -14,25 +14,39 @@ export interface VoteButtonProps {
    * 「投票」ボタンを操作不可にする（Req 3.5）。
    */
   disabled: boolean;
+  /**
+   * 応答待機中（counting）か。true のときラベルを「投票中...」に切り替える。
+   * 待機表示をボタン内に収めることで、下に別要素を出さずレイアウト高さを一定に保つ。
+   */
+  counting?: boolean;
 }
 
 /**
  * 投票を送信する「投票」ボタン。
  * disabled が true の間は押下できない（応答待機中の二重送信防止, Req 3.5）。
+ * counting が true の間はラベルを「投票中...」にして、待機状態をボタン内で示す。
  */
-export function VoteButton({ onClick, disabled }: VoteButtonProps): React.JSX.Element {
+export function VoteButton({
+  onClick,
+  disabled,
+  counting = false,
+}: VoteButtonProps): React.JSX.Element {
+  const label = counting ? "投票中..." : "投票";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label="投票"
+      aria-label={label}
+      aria-busy={counting}
       data-testid="vote-button"
       style={{
         appearance: "none",
         border: "none",
         borderRadius: 8,
         padding: "0.75rem 2rem",
+        // ラベルが「投票」「投票中...」で幅が変わってもガタつかないよう最小幅を確保する。
+        minWidth: "10rem",
         fontSize: "1.1rem",
         fontWeight: 700,
         color: "#ffffff",
@@ -41,7 +55,7 @@ export function VoteButton({ onClick, disabled }: VoteButtonProps): React.JSX.El
         transition: "background 0.15s ease",
       }}
     >
-      投票
+      {label}
     </button>
   );
 }
