@@ -43,6 +43,24 @@ export class StaticHostingStack extends Stack {
     // CloudFront 経由アクセスのみ許可する条件付きステートメントを自動付与する。
     const origin = origins.S3BucketOrigin.withOriginAccessControl(this.siteBucket);
 
+    // Response Headers Policy: CORS ヘッダ（Access-Control-Allow-Origin）を付与する。
+    // meta.json などを外部（例: Game Plaza）のフロントから fetch できるようにするため。
+    // 全オリジン許可（"*"）。特定オリジンに絞りたい場合は accessControlAllowOrigins を
+    // 対象ドメインの配列に変更する。
+    const responseHeadersPolicy = new cloudfront.ResponseHeadersPolicy(
+      this,
+      'SiteCorsHeadersPolicy',
+      {
+        corsBehavior: {
+          accessControlAllowCredentials: false,
+          accessControlAllowHeaders: ['*'],
+          accessControlAllowMethods: ['GET', 'HEAD'],
+          accessControlAllowOrigins: ['*'],
+          originOverride: true,
+        },
+      },
+    );
+
     this.distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       defaultRootObject: 'index.html',
       defaultBehavior: {
@@ -50,6 +68,7 @@ export class StaticHostingStack extends Stack {
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        responseHeadersPolicy,
       },
       // SPA 用フォールバック: S3 が返す 403/404 を index.html（200）へ書き換える。
       errorResponses: [
