@@ -244,7 +244,12 @@ export async function analyze(
   const invocation = await invokeBedrock(client, image, candidates, config);
 
   // 3. 呼び出し失敗（タイムアウト / エラー / リトライ全滅 / JSON 不正）は解析失敗（Req 5.9）。
+  //    詳細な失敗理由は invokeBedrock 内で console.error 済み。ここでは解析失敗への
+  //    マッピングを記録する（切り分け用）。
   if (!invocation.ok) {
+    console.error(
+      `[analyzer] 解析失敗として処理します (ANALYSIS_FAILED): ${invocation.message}`,
+    );
     return ANALYSIS_FAILED(invocation.message);
   }
 

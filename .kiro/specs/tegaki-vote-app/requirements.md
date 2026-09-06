@@ -34,7 +34,8 @@
 - **is_valid**: 投票が有効票か無効票かを表す真偽値。候補者リストと一致した場合 true。
 - **confidence**: Bedrock_LLM が返す判定の信頼度。0.0〜1.0 の範囲の数値。
 - **election_id**: 各 Election を一意に識別する文字列（例: "round-1"、"round-2"、"round-3"）。
-- **Results_View**: 指定した Election（開票回）の開票結果を表示する機能。want 要件。Backend は指定 election_id の票レコード一覧を返し、総投票数・有効票数・無効票数・候補者ごとの得票の集計は Frontend が行う。
+- **Results_View（/results）**: 指定した Election（開票回）の開票結果を表示する運営者向け画面。want 要件。Backend は指定 election_id の票レコード一覧を返し、総投票数・有効票数・無効票数・候補者ごとの得票の集計は Frontend が行う。Invalid_Votes_View（/invalid）と相互に遷移できる。投票ページ（/）からは到達しない。
+- **Invalid_Votes_View（/invalid）**: 無効票の詳細を理由付きで一覧表示する運営者向け画面。Frontend が Backend から受信した票レコード一覧のうち is_valid が false の票を抽出し、各無効票の vote_id・recognized_text（判読不能なら null）・reason・created_at を表示する。Results_View（/results）と相互に遷移でき、投票者フローとは分離した独立エリアであり投票ページ（/）からは到達しない。
 
 ## Requirements
 
@@ -77,6 +78,7 @@
 6. IF Canvas_Component に手書き内容が存在しない状態で「投票」ボタンが操作される, THEN THE Frontend SHALL 投票を送信せず、手書き入力を促すメッセージを表示する
 7. IF 投票リクエストの送信後 10 秒以内に Backend から成功応答が返らない、または Backend がエラー応答を返す, THEN THE Frontend SHALL 「開票中...」の状態表示を終了し、送信に失敗したことを示すメッセージを表示し、「投票」ボタンを再度操作可能な状態に戻す
 8. WHEN Backend から投票登録の成功応答を受信する, THE Frontend SHALL 「開票中...」の状態表示を終了し、投票が登録されたことを示す結果表示を行う
+9. WHEN Backend から投票登録の成功応答を受信する, THE Frontend SHALL Canvas_Component の手書き内容を消去し、Canvas_Component を空の状態に戻す
 
 ### Requirement 4: 投票リクエストの受付と検証
 
@@ -133,10 +135,8 @@
 #### Acceptance Criteria
 
 1. WHEN 投票結果の保存が完了する, THE Backend SHALL リクエスト受信から 3 秒以内に、vote_id、recognized_text、matched_candidate、is_valid（true または false）、confidence（0.00 から 1.00 の範囲の数値）、reason、created_at を含む 200 レスポンスを返す
-2. WHEN is_valid が true を含む 200 レスポンスを受け取る, THE Frontend SHALL 有効票である旨の判定結果を表示する
-3. WHEN is_valid が false を含む 200 レスポンスを受け取る, THE Frontend SHALL 無効票である旨の判定結果と reason の内容を表示する
-4. WHEN 200 レスポンスを受け取る, THE Frontend SHALL matched_candidate と、confidence を 0 から 100 パーセントに変換した値を含む判定内容を表示する
-5. IF 投票結果の応答が 200 以外である、または 3 秒以内に応答を受信できない, THEN THE Frontend SHALL 判定結果を確定表示せず、結果を取得できなかった旨のエラー内容を表示する
+2. WHEN 200 レスポンスを受け取る, THE Frontend SHALL 投票ページ（/）の ResultView に投票が登録された旨の完了メッセージのみを表示し、is_valid・matched_candidate・confidence・reason・recognized_text などの判定詳細を投票者に表示しない
+3. IF 投票結果の応答が 200 以外である、または 3 秒以内に応答を受信できない, THEN THE Frontend SHALL 完了メッセージを確定表示せず、結果を取得できなかった旨のエラー内容を表示する
 
 ### Requirement 8: エラーハンドリング
 
@@ -156,7 +156,7 @@
 
 #### Acceptance Criteria
 
-1. WHEN GET /elections/{election_id}/results リクエストを受け付ける, THE Backend SHALL 指定 election_id を保存用ラベルとして扱い、開票回定義との照合を行わず、当該 election_id を持つ票レコード一覧（各レコードは matched_candidate、is_valid を含む）を返す
+1. WHEN GET /elections/{election_id}/results リクエストを受け付ける, THE Backend SHALL 指定 election_id を保存用ラベルとして扱い、開票回定義との照合を行わず、当該 election_id を持つ票レコード一覧（各レコードは vote_id、matched_candidate、is_valid、recognized_text、reason、created_at を含む）を返す
 2. WHERE 指定 election_id を持つ票レコードが存在しない, THE Backend SHALL 空の票レコード一覧（空配列）を返す
 3. WHEN Backend から票レコード一覧を受信する, THE Frontend SHALL 総投票数、有効票数、無効票数を集計する。ここで総投票数 = 有効票数 + 無効票数 とする
 4. WHEN Frontend が開票結果を集計する, THE Frontend SHALL is_valid が true の票を matched_candidate ごとに集計し、候補者ごとの得票数を得票数の降順で表示する
@@ -190,6 +190,20 @@
 4. WHEN Frontend が Backend から API レスポンスを受信する, THE Frontend SHALL 当該レスポンスを表示に必要な形へ整形する
 5. IF Backend が API リクエストに対してエラー応答を返した、または応答が 10 秒以内に得られない, THEN THE Frontend SHALL 通信失敗を示すエラー表示を行い、直前の表示状態を保持する
 
+### Requirement 12: 無効票の表示（運営者向け）
+
+**User Story:** 開票の運営者として、無効票の詳細（AI が読み取ったテキストと無効と判定した理由）を確認したい。なぜ無効になったのかを把握し、開票の透明性を担保するため。
+
+#### Acceptance Criteria
+
+1. THE Frontend SHALL Invalid_Votes_View（/invalid）で、Backend から受信した票レコード一覧のうち is_valid が false の票を抽出し、各無効票の vote_id、recognized_text、reason、created_at を表示する
+2. WHERE recognized_text が null である（判読不能）, THE Frontend SHALL 当該無効票の recognized_text 欄に判読不能である旨を表示する
+3. WHERE is_valid が false の票が 1 件も存在しない, THE Frontend SHALL 無効票が存在しない旨を表示する
+4. THE Frontend SHALL Results_View（/results）に Invalid_Votes_View（/invalid）へ遷移するリンクを表示する
+5. THE Frontend SHALL Invalid_Votes_View（/invalid）に Results_View（/results）へ遷移するリンクを表示する
+6. THE Frontend SHALL 投票ページ（/）から Results_View（/results）および Invalid_Votes_View（/invalid）へ遷移する手段を提供しない
+7. THE Frontend SHALL Invalid_Votes_View（/invalid）で無効票の reason などの判定詳細を運営者向けに表示し、投票ページ（/）の ResultView には reason などの判定詳細を表示しない
+
 ## 未決事項（設計フェーズで決定する）
 
 以下は設計フェーズで解決すべき事項であり、要件の内容には影響しないが記録として残す。
@@ -203,3 +217,5 @@
 - 表記ゆれの許容度（厳密一致寄り or ゆるめ）
 - Bedrock の利用モデル ID（Claude 系のどれか）
 - エラーレスポンスの具体的な設計（ステータスコード・ボディ形式）
+- 運営者向け画面のルーティング（Results_View=/results、Invalid_Votes_View=/invalid の相互遷移と、投票ページ / からの分離）の具体的な実現手段（ルータ構成・リンク配置）の詳細は設計フェーズ（design.md）で確定する。要件は「/results と /invalid は相互遷移でき、投票ページ / からは到達しない」という振る舞いに集中する
+- GET /elections/{election_id}/results が返す票レコード（VoteRecordSummary 相当）に追加する recognized_text・reason・created_at のフィールド名・型・null の扱いなど API 契約の詳細は設計フェーズ（design.md）で確定する。要件は「各票レコードに vote_id・matched_candidate・is_valid・recognized_text・reason・created_at を含めて返し、無効票の抽出・集計は Frontend が行う」という振る舞いに集中する

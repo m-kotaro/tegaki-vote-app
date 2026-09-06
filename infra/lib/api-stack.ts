@@ -21,10 +21,11 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 /**
  * バックエンド Lambda が呼び出す Bedrock モデル ID（推論プロファイル ID）。
  * design.md「Bedrock プロンプト設計」および backend の DEFAULT_BEDROCK_MODEL_ID に合わせる。
- * デプロイ先リージョンに応じて `us.` / `apac.` / `eu.` プレフィックスへ変更する
+ * 既定は最新の Claude Sonnet 5（`global.` グローバル推論プロファイル）。リージョン限定で
+ * 使う場合は `us.` / `apac.` / `eu.` / `jp.` プレフィックスの推論プロファイル ID へ変更する
  * （props.bedrockModelId で差し替え可能）。
  */
-const DEFAULT_BEDROCK_MODEL_ID = 'apac.anthropic.claude-sonnet-4-20250514-v1:0';
+const DEFAULT_BEDROCK_MODEL_ID = 'jp.anthropic.claude-sonnet-4-5-20250929-v1:0';
 
 export interface ApiStackProps extends StackProps {
   /**

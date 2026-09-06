@@ -16,6 +16,7 @@
 // _Requirements: 9.1, 9.3, 9.4, 9.5_
 
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import type { Election, ElectionResults } from "@tegaki/shared";
 import { getActiveElection } from "../config/elections.js";
 import { createVoteApi } from "../api/index.js";
@@ -105,8 +106,12 @@ export function ResultsPage(): React.JSX.Element {
     >
       <h1>開票結果</h1>
 
-
       <h2 style={{ marginBottom: "0.5rem" }}>{title}</h2>
+
+      {/* 運営者エリア間の相互遷移リンク（Req 12.4）。投票ページ（/）へのリンクは追加しない（Req 12.6）。 */}
+      <p style={{ margin: "0 0 1rem" }}>
+        <Link to="/invalid">無効票を見る →</Link>
+      </p>
 
       {/* ローディング表示。 */}
       {status === "loading" && (
