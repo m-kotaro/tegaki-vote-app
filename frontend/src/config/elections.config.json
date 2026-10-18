@@ -3,7 +3,7 @@
   "elections": [
     {
       "election_id": "round-1",
-      "title": "第1回 開票",
+      "title": "大統領候補選",
       "candidates": [
         {
           "id": "candidate-1",

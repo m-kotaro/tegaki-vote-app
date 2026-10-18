@@ -29,6 +29,14 @@ export interface CanvasComponentHandle {
    * 未入力時は null を返し、呼び出し側が未入力エラー通知を出す（Req 1.6）。
    */
   toPngBase64(): string | null;
+  /**
+   * 指定座標を中心に半径 radius の円領域を「消しゴムで削る」。
+   * destination-out 合成で半透明に削るため、同じ場所を複数回通ると徐々に薄くなる
+   * （消しゴムアニメの案B: 数回ゴシゴシして徐々に消える）。
+   * strength は 1 回の削り強度（0〜1）。
+   * 座標は Canvas の内部解像度（width/height）基準で渡す。
+   */
+  eraseAt(x: number, y: number, radius: number, strength: number): void;
 }
 
 /** width / height を最小サイズにクランプする（Req 1.1） */
@@ -166,6 +174,22 @@ export const CanvasComponent = forwardRef<CanvasComponentHandle, CanvasComponent
             return null;
           }
           return canvas.toDataURL("image/png");
+        },
+        eraseAt(x: number, y: number, radius: number, strength: number): void {
+          const canvas = canvasRef.current;
+          const ctx = canvas?.getContext("2d") ?? null;
+          if (canvas === null || ctx === null) {
+            return;
+          }
+          // destination-out 合成で「削る」。globalAlpha で 1 回あたりの削り強度を制御し、
+          // 同じ場所を複数回通ると徐々に薄くなる（案B: ゴシゴシ）。
+          ctx.save();
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.globalAlpha = Math.max(0, Math.min(1, strength));
+          ctx.beginPath();
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         },
       }),
       [],

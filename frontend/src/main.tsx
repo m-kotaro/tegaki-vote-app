@@ -4,7 +4,9 @@
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "./index.css";
 import { App } from "./App.js";
+import { loadRuntimeConfig } from "./config/runtimeConfig.js";
 
 async function enableMocksIfNeeded(): Promise<void> {
   const explicit = import.meta.env.VITE_ENABLE_MOCKS;
@@ -17,6 +19,10 @@ async function enableMocksIfNeeded(): Promise<void> {
 }
 
 async function bootstrap(): Promise<void> {
+  // API のベース URL などの実行時設定を確定する（/config.json を読む）。
+  // createVoteApi はこの確定値を同期参照するため、マウント前に必ず読み込む。
+  await loadRuntimeConfig();
+
   await enableMocksIfNeeded();
 
   const container = document.getElementById("root");

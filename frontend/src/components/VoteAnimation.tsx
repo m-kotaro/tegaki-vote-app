@@ -30,7 +30,7 @@ export function VoteAnimation({ active }: VoteAnimationProps): React.JSX.Element
       aria-hidden="true"
       style={{
         position: "relative",
-        height: active ? 140 : 0,
+        height: active ? 400 : 0,
         overflow: "hidden",
         transition: "height 0.2s ease",
         margin: active ? "0.75rem 0" : 0,
@@ -46,21 +46,21 @@ export function VoteAnimation({ active }: VoteAnimationProps): React.JSX.Element
               left: "50%",
               bottom: 0,
               transform: "translateX(-50%)",
-              width: 96,
-              height: 64,
-              borderRadius: 6,
+              width: 340,
+              height: 210,
+              borderRadius: 12,
               background: "#3a5a8c",
             }}
           >
             <div
               style={{
                 position: "absolute",
-                top: 8,
+                top: 22,
                 left: "50%",
                 transform: "translateX(-50%)",
-                width: 56,
-                height: 6,
-                borderRadius: 3,
+                width: 210,
+                height: 12,
+                borderRadius: 6,
                 background: "#1f3557",
               }}
             />
@@ -73,18 +73,18 @@ export function VoteAnimation({ active }: VoteAnimationProps): React.JSX.Element
           <motion.div
             key="paper"
             // 投票用紙。上から投票箱の投入口へ落ちていく（遅延 0 で即開始）。
-            initial={{ y: -110, opacity: 0, rotate: -6 }}
-            animate={{ y: 8, opacity: [0, 1, 1, 0], rotate: [-6, 3, 0] }}
+            initial={{ y: -290, opacity: 0, rotate: -6 }}
+            animate={{ y: 28, opacity: [0, 1, 1, 0], rotate: [-6, 3, 0] }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut", delay: 0 }}
+            transition={{ duration: 2, ease: "easeInOut", delay: 0 }}
             style={{
               position: "absolute",
               left: "50%",
               top: 0,
               transform: "translateX(-50%)",
-              width: 64,
-              height: 84,
-              borderRadius: 4,
+              width: 170,
+              height: 210,
+              borderRadius: 8,
               background: "#ffffff",
               border: "1px solid #c7c7c7",
               boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
